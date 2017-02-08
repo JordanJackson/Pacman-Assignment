@@ -11,11 +11,6 @@ public class PinkyScatterActionNode : ActionNode
     public FsmEvent chaseEvent;
     public FsmEvent deathEvent;
 
-    bool chase = false;
-
-    float currentTime;
-    public float scatterTime;
-
     int locationIndex = 0;
 
     GhostController controller;
@@ -31,8 +26,6 @@ public class PinkyScatterActionNode : ActionNode
     public override void OnEnable()
     {
         base.OnEnable();
-
-        currentTime = 0.0f;
     }
 
     public override Status Update()
@@ -50,8 +43,7 @@ public class PinkyScatterActionNode : ActionNode
         }
 
         // chase transition
-        currentTime += Time.deltaTime;
-        if (currentTime >= scatterTime)
+        if (GameDirector.Instance.state == GameDirector.States.enState_Normal)
         {
             if (chaseEvent.id != 0)
             {
@@ -61,16 +53,13 @@ public class PinkyScatterActionNode : ActionNode
             return Status.Failure;
         }
 
-        if (new Vector2(controller.transform.position.x, controller.transform.position.y) == scatterLocations[locationIndex])
+        if (Vector2.Distance(new Vector2(controller.transform.position.x, controller.transform.position.y), scatterLocations[locationIndex]) < 5)
         {
             locationIndex++;
-            if (locationIndex >= scatterLocations.Length)
-            {
-                locationIndex = 0;
-            }
+            locationIndex = locationIndex % scatterLocations.Length;
         }
 
-        // check for Cruise Elroy
+        // pinky goes from corner to corner
         controller.moveToLocation = scatterLocations[locationIndex];
 
         return Status.Running;

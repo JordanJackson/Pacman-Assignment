@@ -12,10 +12,7 @@ public class ClydeScatterActionNode : ActionNode
     public FsmEvent chaseEvent;
     public FsmEvent deathEvent;
 
-    bool chase = false;
-
-    float currentTime;
-    public float scatterTime;
+    Transform pacman;
 
     int locationIndex = 0;
 
@@ -26,14 +23,13 @@ public class ClydeScatterActionNode : ActionNode
         chaseEvent = new ConcreteFsmEvent();
         deathEvent = new ConcreteFsmEvent();
 
+        pacman = GameObject.FindObjectOfType<PacmanController>().transform;
         controller = owner.root.gameObject.GetComponent<GhostController>();
     }
 
     public override void OnEnable()
     {
         base.OnEnable();
-
-        currentTime = 0.0f;
     }
 
     public override Status Update()
@@ -51,8 +47,7 @@ public class ClydeScatterActionNode : ActionNode
         }
 
         // chase transition
-        currentTime += Time.deltaTime;
-        if (currentTime >= scatterTime)
+        if (GameDirector.Instance.state == GameDirector.States.enState_Normal)
         {
             if (chaseEvent.id != 0)
             {
@@ -62,17 +57,8 @@ public class ClydeScatterActionNode : ActionNode
             return Status.Failure;
         }
 
-        if (new Vector2(controller.transform.position.x, controller.transform.position.y) == scatterLocations[locationIndex])
-        {
-            locationIndex++;
-            if (locationIndex >= scatterLocations.Length)
-            {
-                locationIndex = 0;
-            }
-        }
-
-        // check for Cruise Elroy
-        controller.moveToLocation = scatterLocations[locationIndex];
+        // Clyde aims for suicide
+        controller.moveToLocation = pacman.position;
 
         return Status.Running;
     }

@@ -6,18 +6,12 @@ using BehaviourMachine;
 [NodeInfo(category = "Custom/", icon = "DefaultAsset", description = "Blinky Scatter.")]
 public class BlinkyScatterActionNode : ActionNode
 {
-    public Vector2[] scatterLocations;
-
     public FsmEvent chaseEvent;
     public FsmEvent deathEvent;
 
-    bool chase = false;
+    public float runAwayFactor;
 
-    float currentTime;
-    public float scatterTime;
-
-    int locationIndex = 0;
-
+    Transform pacman;
     GhostController blinkyController;
 
     public override void Reset()
@@ -25,14 +19,13 @@ public class BlinkyScatterActionNode : ActionNode
         chaseEvent = new ConcreteFsmEvent();
         deathEvent = new ConcreteFsmEvent();
 
+        pacman = GameObject.FindObjectOfType<PacmanController>().transform;
         blinkyController = owner.root.gameObject.GetComponent<GhostController>();
     }
 
     public override void OnEnable()
     {
         base.OnEnable();
-        
-        currentTime = 0.0f;
     }
 
     public override Status Update()
@@ -50,8 +43,7 @@ public class BlinkyScatterActionNode : ActionNode
         }
 
         // chase transition
-        currentTime += Time.deltaTime;
-        if (currentTime >= scatterTime)
+        if (GameDirector.Instance.state == GameDirector.States.enState_Normal)
         {
             if (chaseEvent.id != 0)
             {
@@ -61,17 +53,16 @@ public class BlinkyScatterActionNode : ActionNode
             return Status.Failure;
         }
 
-        if (new Vector2(blinkyController.transform.position.x, blinkyController.transform.position.y) == scatterLocations[locationIndex])
-        {
-            locationIndex++;
-            if (locationIndex >= scatterLocations.Length)
-            {
-                locationIndex = 0;
-            }
-        }
+        // Blinky runs in a direction away from pacman
+        Vector3 diff = new Vector3(owner.root.transform.position.x - pacman.position.x, 0.0f, owner.root.transform.position.y - pacman.position.y);
+        diff.Normalize();
+        blinkyController.moveToLocation = blinkyController.transform.position + diff * runAwayFactor;
 
-        // check for Cruise Elroy
-        blinkyController.moveToLocation = scatterLocations[locationIndex];
+        if (blinkyController.moveToLocation.x <= 0 || blinkyController.moveToLocation.x >= 18 ||
+            blinkyController.moveToLocation.y <= -21 || blinkyController.moveToLocation.y >= 0)
+        {
+            blinkyController.moveToLocation = blinkyController.transform.position + diff * -runAwayFactor;
+        }
 
         return Status.Running;
     }

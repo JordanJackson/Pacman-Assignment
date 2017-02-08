@@ -10,13 +10,9 @@ public class InkyChaseActionNode : ActionNode
     public FsmEvent scatterEvent;
     public FsmEvent deathEvent;
 
-    bool scatter = false;
-
-    float currentTime;
-    public float chaseTime;
-
     PacmanController pacman;
     GhostController blinky;
+    GhostController pinky;
     GhostController controller;
 
     public override void Reset()
@@ -26,15 +22,13 @@ public class InkyChaseActionNode : ActionNode
 
         pacman = GameObject.FindObjectOfType<PacmanController>();
         blinky = GameObject.Find("Blinky").GetComponent<GhostController>();
+        pinky = GameObject.Find("Pinky").GetComponent<GhostController>();
         controller = owner.root.gameObject.GetComponent<GhostController>();
     }
 
     public override void OnEnable()
     {
         base.OnEnable();
-
-
-        currentTime = 0.0f;
     }
 
     public override Status Update()
@@ -51,9 +45,7 @@ public class InkyChaseActionNode : ActionNode
         }
 
         // scatter transition
-        currentTime += Time.deltaTime;
-
-        if (currentTime > chaseTime)
+        if (GameDirector.Instance.state == GameDirector.States.enState_PacmanInvincible)
         {
             if (scatterEvent.id != 0)
             {
@@ -63,13 +55,11 @@ public class InkyChaseActionNode : ActionNode
             return Status.Failure;
         }
 
-        // 2 * Vector from blinky to 2 * Pacman pos + Pacman Direction * 2
-        Vector2 pacPos = new Vector2(pacman.transform.position.x, pacman.transform.position.y);
-        pacPos += 2 * pacman.MoveDirections[(int)pacman.moveDirection];
+        // aims for point between Pinky and Blinky
+        Vector2 pinkyPos = new Vector2(pinky.transform.position.x, pinky.transform.position.y);
         Vector2 blinkyPos = new Vector2(blinky.transform.position.x, blinky.transform.position.y);
-        pacPos -= blinkyPos;
-        pacPos *= 2;
-        controller.moveToLocation = blinkyPos + pacPos;
+
+        controller.moveToLocation = blinkyPos + (pinkyPos - blinkyPos) / 2;
 
         return Status.Running;
     }

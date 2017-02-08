@@ -10,11 +10,6 @@ public class PinkyChaseActionNode : ActionNode
     public FsmEvent scatterEvent;
     public FsmEvent deathEvent;
 
-    bool scatter = false;
-
-    float currentTime;
-    public float chaseTime;
-
     PacmanController pacman;
     GhostController controller;
 
@@ -30,9 +25,6 @@ public class PinkyChaseActionNode : ActionNode
     public override void OnEnable()
     {
         base.OnEnable();
-
-
-        currentTime = 0.0f;
     }
 
     public override Status Update()
@@ -49,9 +41,7 @@ public class PinkyChaseActionNode : ActionNode
         }
 
         // scatter transition
-        currentTime += Time.deltaTime;
-
-        if (currentTime > chaseTime)
+        if (GameDirector.Instance.state == GameDirector.States.enState_PacmanInvincible)
         {
             if (scatterEvent.id != 0)
             {

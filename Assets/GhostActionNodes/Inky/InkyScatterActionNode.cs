@@ -6,17 +6,12 @@ using BehaviourMachine;
 [NodeInfo(category = "Custom/", icon = "DefaultAsset", description = "Pinky Scatter.")]
 public class InkyScatterActionNode : ActionNode
 {
-    public Vector2[] scatterLocations;
-
     public FsmEvent chaseEvent;
     public FsmEvent deathEvent;
 
-    bool chase = false;
-
-    float currentTime;
-    public float scatterTime;
-
-    int locationIndex = 0;
+    GhostController pinky;
+    GhostController blinky;
+    GhostController clyde;
 
     GhostController controller;
 
@@ -25,14 +20,15 @@ public class InkyScatterActionNode : ActionNode
         chaseEvent = new ConcreteFsmEvent();
         deathEvent = new ConcreteFsmEvent();
 
+        blinky = GameObject.Find("Blinky").GetComponent<GhostController>();
+        pinky = GameObject.Find("Pinky").GetComponent<GhostController>();
+        clyde = GameObject.Find("Clyde").GetComponent<GhostController>();
         controller = owner.root.gameObject.GetComponent<GhostController>();
     }
 
     public override void OnEnable()
     {
         base.OnEnable();
-
-        currentTime = 0.0f;
     }
 
     public override Status Update()
@@ -50,8 +46,7 @@ public class InkyScatterActionNode : ActionNode
         }
 
         // chase transition
-        currentTime += Time.deltaTime;
-        if (currentTime >= scatterTime)
+        if (GameDirector.Instance.state == GameDirector.States.enState_Normal)
         {
             if (chaseEvent.id != 0)
             {
@@ -61,17 +56,24 @@ public class InkyScatterActionNode : ActionNode
             return Status.Failure;
         }
 
-        if (new Vector2(controller.transform.position.x, controller.transform.position.y) == scatterLocations[locationIndex])
+        Transform target;
+        if (Vector3.Distance(pinky.transform.position, controller.transform.position) <= Vector3.Distance(blinky.transform.position, controller.transform.position)
+            && Vector3.Distance(pinky.transform.position, controller.transform.position) <= Vector3.Distance(clyde.transform.position, controller.transform.position))
         {
-            locationIndex++;
-            if (locationIndex >= scatterLocations.Length)
-            {
-                locationIndex = 0;
-            }
+            target = pinky.transform;
+        }
+        else if (Vector3.Distance(blinky.transform.position, controller.transform.position) <= Vector3.Distance(clyde.transform.position, controller.transform.position))
+        {
+            target = blinky.transform;
+        }
+        else
+        {
+            target = clyde.transform;
         }
 
-        // check for Cruise Elroy
-        controller.moveToLocation = scatterLocations[locationIndex];
+
+        // Inky follows the closest ghost to him
+        controller.moveToLocation = target.position;
 
         return Status.Running;
     }
